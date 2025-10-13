@@ -61,10 +61,14 @@ export function FormEditorClient({ initialSchema }: FormEditorClientProps) {
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-        await updateFormSchema(schema);
-        toast({ title: "Éxito", description: "El esquema del formulario se actualizó correctamente." });
+        const result = await updateFormSchema(schema);
+        if (result.success) {
+          toast({ title: "Éxito", description: "El esquema del formulario se actualizó correctamente." });
+        } else {
+          throw new Error(result.message);
+        }
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+        toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "No se pudieron guardar los cambios." });
     } finally {
         setIsSaving(false);
     }

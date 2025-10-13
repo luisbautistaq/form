@@ -40,16 +40,20 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await updateSiteContent(values);
-      toast({
-        title: "¡Éxito!",
-        description: "El contenido del sitio ha sido actualizado.",
-      });
+      const result = await updateSiteContent(values);
+      if (result.success) {
+        toast({
+          title: "¡Éxito!",
+          description: "El contenido del sitio ha sido actualizado.",
+        });
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "¡Uy! Algo salió mal.",
-        description: "Hubo un problema al guardar tus cambios.",
+        description: error instanceof Error ? error.message : "Hubo un problema al guardar tus cambios.",
       });
     }
   }

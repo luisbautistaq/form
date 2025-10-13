@@ -47,8 +47,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
           zodField = z.string();
       }
       if (field.required) {
-        // Para los campos de texto, usamos .min(1)
-        if(field.type === 'text' || field.type === 'textarea' || field.type === 'select'){
+        if(field.type === 'text' || field.type === 'textarea' || field.type === 'select' || field.type === 'email'){
             zodField = zodField.min(1, { message: `${field.label} es obligatorio.` });
         }
       } else {
@@ -83,7 +82,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
       toast({
         variant: "destructive",
         title: "¡Uy! Algo salió mal.",
-        description: "Hubo un problema con tu envío.",
+        description: error instanceof Error ? error.message : "Hubo un problema con tu envío.",
       });
     }
   }
