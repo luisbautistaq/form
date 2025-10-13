@@ -57,19 +57,19 @@ export function AdminSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton href="/admin" isActive={pathname === '/admin/responses'}>
               <Inbox />
-              Responses
+              Respuestas
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton href="/admin/form-editor" isActive={pathname === '/admin/form-editor'}>
               <Edit />
-              Form Editor
+              Editor de Formularios
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton href="/admin/content-editor" isActive={pathname === '/admin/content-editor'}>
               <FileText />
-              Content Editor
+              Editor de Contenido
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -87,7 +87,7 @@ export function AdminSidebar() {
                 <span className="truncate text-sm font-medium text-sidebar-foreground">
                   {user?.displayName || user?.email}
                 </span>
-                <span className="text-xs text-sidebar-foreground/70">Admin</span>
+                <span className="text-xs text-sidebar-foreground/70">Administrador</span>
               </div>
               <ChevronsUpDown className="h-4 w-4 text-sidebar-foreground/70" />
             </Button>
@@ -96,7 +96,7 @@ export function AdminSidebar() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
-                    {user?.displayName || "Administrator"}
+                    {user?.displayName || "Administrador"}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
@@ -106,7 +106,7 @@ export function AdminSidebar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>Cerrar Sesión</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

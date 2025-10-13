@@ -28,7 +28,7 @@ import type { FormSubmission } from "@/lib/types";
 
 // Function to export data to CSV
 function exportToCsv(data: FormSubmission[], columns: {id: string, label: string}[], fileName: string) {
-    const headers = ['Submitted At', ...columns.map(c => c.label)];
+    const headers = ['Enviado en', ...columns.map(c => c.label)];
     const rows = data.map(submission => {
         const rowData = [
             submission.createdAt.toLocaleString(),
@@ -60,7 +60,7 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Submitted At
+          Enviado en
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -92,16 +92,16 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
         <Input
-          placeholder="Filter by email..."
+          placeholder="Filtrar por correo electrónico..."
           value={(table.getColumn("data_email")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("data_email")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
-        <Button onClick={() => exportToCsv(data, formFields, "form-submissions.csv")}>
+        <Button onClick={() => exportToCsv(data, formFields, "respuestas-formulario.csv")}>
           <Download className="mr-2 h-4 w-4" />
-          Export CSV
+          Exportar CSV
         </Button>
       </div>
       <div className="rounded-md border bg-card">
@@ -147,7 +147,7 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No hay resultados.
                 </TableCell>
               </TableRow>
             )}
@@ -161,7 +161,7 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          Anterior
         </Button>
         <Button
           variant="outline"
@@ -169,7 +169,7 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          Siguiente
         </Button>
       </div>
     </div>

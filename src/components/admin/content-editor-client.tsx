@@ -24,11 +24,11 @@ interface ContentEditorClientProps {
 }
 
 const formSchema = z.object({
-  headline: z.string().min(1, "Headline is required."),
-  description: z.string().min(1, "Description is required."),
-  image: z.string().url("Must be a valid URL."),
-  formTitle: z.string().min(1, "Form title is required."),
-  formDescription: z.string().min(1, "Form description is required."),
+  headline: z.string().min(1, "El titular es obligatorio."),
+  description: z.string().min(1, "La descripción es obligatoria."),
+  image: z.string().url("Debe ser una URL válida."),
+  formTitle: z.string().min(1, "El título del formulario es obligatorio."),
+  formDescription: z.string().min(1, "La descripción del formulario es obligatoria."),
 });
 
 export function ContentEditorClient({ initialContent }: ContentEditorClientProps) {
@@ -42,14 +42,14 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
     try {
       await updateSiteContent(values);
       toast({
-        title: "Success!",
-        description: "Site content has been updated.",
+        title: "¡Éxito!",
+        description: "El contenido del sitio ha sido actualizado.",
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem saving your changes.",
+        title: "¡Uy! Algo salió mal.",
+        description: "Hubo un problema al guardar tus cambios.",
       });
     }
   }
@@ -59,7 +59,7 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardHeader>
-            <CardTitle>Landing Page Content</CardTitle>
+            <CardTitle>Contenido de la Página de Inicio</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -67,9 +67,9 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
               name="headline"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Headline</FormLabel>
+                  <FormLabel>Titular</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your catchy headline" {...field} />
+                    <Input placeholder="Tu titular llamativo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -80,9 +80,9 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="A brief description of your service." {...field} />
+                    <Textarea placeholder="Una breve descripción de tu servicio." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,9 +93,9 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Hero Image URL</FormLabel>
+                  <FormLabel>URL de la Imagen Principal</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.jpg" {...field} />
+                    <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -106,9 +106,9 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
               name="formTitle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Form Title</FormLabel>
+                  <FormLabel>Título del Formulario</FormLabel>
                   <FormControl>
-                    <Input placeholder="Title for the contact form" {...field} />
+                    <Input placeholder="Título para el formulario de contacto" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,9 +119,9 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
               name="formDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Form Description</FormLabel>
+                  <FormLabel>Descripción del Formulario</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="A short description for the contact form" {...field} />
+                    <Textarea placeholder="Una breve descripción para el formulario de contacto" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,7 +130,7 @@ export function ContentEditorClient({ initialContent }: ContentEditorClientProps
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+              {form.formState.isSubmitting ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </CardFooter>
         </form>

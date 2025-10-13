@@ -12,17 +12,17 @@ export default function LoginPage() {
         </div>
         <Card>
             <CardHeader className="text-center">
-                <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
-                <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+                <CardTitle className="font-headline text-2xl">Inicio de Sesión de Administrador</CardTitle>
+                <CardDescription>Ingresa tus credenciales para acceder al panel de control</CardDescription>
             </CardHeader>
             <CardContent>
                 <LoginForm />
             </CardContent>
         </Card>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          ¿No tienes una cuenta?{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">
-            Sign up
+            Regístrate
           </Link>
         </p>
       </div>

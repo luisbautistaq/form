@@ -13,20 +13,20 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 const getMockSiteContent = (): SiteContent => {
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-image');
   return {
-    headline: "Build Beautiful Forms, Effortlessly",
-    description: "Our dynamic form builder allows you to create, manage, and deploy custom forms in minutes. See how FormForge can revolutionize your data collection.",
+    headline: "Crea Formularios Atractivos, Sin Esfuerzo",
+    description: "Nuestro creador de formularios dinámicos te permite crear, gestionar y desplegar formularios personalizados en minutos. Descubre cómo FormForge puede revolucionar tu recopilación de datos.",
     image: heroImage?.imageUrl || "https://picsum.photos/seed/formforge-hero/1200/800",
-    formTitle: "Get In Touch",
-    formDescription: "Fill out the form below and we'll get back to you.",
+    formTitle: "Ponte en Contacto",
+    formDescription: "Rellena el siguiente formulario y nos pondremos en contacto contigo.",
   };
 };
 
 const getMockFormSchema = (): FormField[] => {
   return [
-    { id: 'name', type: 'text', label: 'Full Name', placeholder: 'John Doe', required: true, order: 1 },
-    { id: 'email', type: 'email', label: 'Email Address', placeholder: 'john.doe@example.com', required: true, order: 2 },
-    { id: 'interest', type: 'select', label: 'Primary Interest', required: true, order: 3, options: ['Product Inquiry', 'Support', 'Partnership', 'Other'] },
-    { id: 'feedback', type: 'textarea', label: 'Your Message', placeholder: 'Tell us what you think...', required: false, order: 4 },
+    { id: 'name', type: 'text', label: 'Nombre Completo', placeholder: 'John Doe', required: true, order: 1 },
+    { id: 'email', type: 'email', label: 'Dirección de Correo Electrónico', placeholder: 'john.doe@example.com', required: true, order: 2 },
+    { id: 'interest', type: 'select', label: 'Interés Principal', required: true, order: 3, options: ['Consulta de Producto', 'Soporte', 'Asociación', 'Otro'] },
+    { id: 'feedback', type: 'textarea', label: 'Tu Mensaje', placeholder: 'Cuéntanos qué piensas...', required: false, order: 4 },
   ];
 };
 

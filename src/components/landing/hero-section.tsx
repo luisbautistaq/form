@@ -24,7 +24,7 @@ export function HeroSection({ siteContent, formSchema }: HeroSectionProps) {
             <div className="relative mt-6 aspect-[3/2] w-full overflow-hidden rounded-xl">
                <Image
                     src={siteContent.image}
-                    alt="Hero Image"
+                    alt="Imagen Principal"
                     fill
                     className="object-cover"
                     data-ai-hint="abstract tech"

@@ -20,9 +20,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Name is required." }),
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  name: z.string().min(1, { message: "El nombre es obligatorio." }),
+  email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
 });
 
 export function RegisterForm() {
@@ -48,15 +48,19 @@ export function RegisterForm() {
       }
       
       toast({
-        title: "Registration Successful",
-        description: "Redirecting to your dashboard...",
+        title: "Registro Exitoso",
+        description: "Redirigiendo a tu panel de control...",
       });
       router.push('/admin');
     } catch (error: any) {
+        let message = "Por favor, revisa tus datos e inténtalo de nuevo.";
+        if (error.code === 'auth/email-already-in-use') {
+            message = "Este correo electrónico ya está en uso. Por favor, utiliza otro."
+        }
       toast({
         variant: "destructive",
-        title: "Registration Failed",
-        description: error.message || "Please check your details and try again.",
+        title: "Registro Fallido",
+        description: message,
       });
     }
   }
@@ -69,7 +73,7 @@ export function RegisterForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Nombre</FormLabel>
               <FormControl>
                 <Input placeholder="John Doe" {...field} />
               </FormControl>
@@ -82,9 +86,9 @@ export function RegisterForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Correo Electrónico</FormLabel>
               <FormControl>
-                <Input placeholder="admin@example.com" {...field} />
+                <Input placeholder="admin@ejemplo.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -95,7 +99,7 @@ export function RegisterForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Contraseña</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
@@ -104,7 +108,7 @@ export function RegisterForm() {
           )}
         />
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Creating Account..." : "Create Account"}
+            {form.formState.isSubmitting ? "Creando Cuenta..." : "Crear Cuenta"}
         </Button>
       </form>
     </Form>

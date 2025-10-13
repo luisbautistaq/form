@@ -35,7 +35,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
       let zodField: z.ZodType<any, any>;
       switch (field.type) {
         case "email":
-          zodField = z.string().email({ message: "Invalid email address." });
+          zodField = z.string().email({ message: "Dirección de correo electrónico no válida." });
           break;
         case "number":
           zodField = z.coerce.number();
@@ -47,7 +47,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
           zodField = z.string();
       }
       if (field.required) {
-        zodField = zodField.min(1, { message: `${field.label} is required.` });
+        zodField = zodField.min(1, { message: `${field.label} es obligatorio.` });
       } else {
         zodField = zodField.optional();
       }
@@ -68,15 +68,15 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
     try {
       await submitForm(data);
       toast({
-        title: "Success!",
-        description: "Your form has been submitted.",
+        title: "¡Éxito!",
+        description: "Tu formulario ha sido enviado.",
       });
       form.reset();
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your submission.",
+        title: "¡Uy! Algo salió mal.",
+        description: "Hubo un problema con tu envío.",
       });
     }
   }
@@ -91,7 +91,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
           <Select onValueChange={formField.onChange} defaultValue={formField.value}>
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder={fieldConfig.placeholder || "Select an option"} />
+                <SelectValue placeholder={fieldConfig.placeholder || "Selecciona una opción"} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
@@ -132,7 +132,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
               />
             ))}
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Submitting...' : 'Submit Form'}
+              {form.formState.isSubmitting ? 'Enviando...' : 'Enviar Formulario'}
             </Button>
           </form>
         </Form>

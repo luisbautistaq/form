@@ -12,17 +12,17 @@ export default function RegisterPage() {
         </div>
         <Card>
             <CardHeader className="text-center">
-                <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
-                <CardDescription>Enter your details to get started</CardDescription>
+                <CardTitle className="font-headline text-2xl">Crear una Cuenta</CardTitle>
+                <CardDescription>Ingresa tus datos para comenzar</CardDescription>
             </CardHeader>
             <CardContent>
                 <RegisterForm />
             </CardContent>
         </Card>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
+          ¿Ya tienes una cuenta?{' '}
           <Link href="/login" className="font-medium text-primary hover:underline">
-            Sign in
+            Inicia sesión
           </Link>
         </p>
       </div>

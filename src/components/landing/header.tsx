@@ -16,7 +16,7 @@ export function Header() {
             <Button asChild variant="ghost" size="sm">
                 <Link href="/login">
                     <User className="mr-2" />
-                    Admin Login
+                    Acceso Admin
                 </Link>
             </Button>
         </div>

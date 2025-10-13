@@ -62,9 +62,9 @@ export function FormEditorClient({ initialSchema }: FormEditorClientProps) {
     setIsSaving(true);
     try {
         await updateFormSchema(schema);
-        toast({ title: "Success", description: "Form schema updated successfully." });
+        toast({ title: "Éxito", description: "El esquema del formulario se actualizó correctamente." });
     } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "Failed to save changes." });
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
     } finally {
         setIsSaving(false);
     }
@@ -74,14 +74,14 @@ export function FormEditorClient({ initialSchema }: FormEditorClientProps) {
     <div className="space-y-6">
         <Card>
             <CardHeader>
-                <CardTitle>Form Fields</CardTitle>
+                <CardTitle>Campos del Formulario</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 {schema.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-2 rounded-md border p-4">
                         <div className="flex-1">
                             <p className="font-medium">{field.label} <span className="text-sm text-muted-foreground">({field.type})</span></p>
-                            <p className="text-xs text-muted-foreground">ID: {field.id} {field.required && " | Required"}</p>
+                            <p className="text-xs text-muted-foreground">ID: {field.id} {field.required && " | Requerido"}</p>
                         </div>
                         <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" onClick={() => moveField(index, 'up')} disabled={index === 0}>
@@ -99,16 +99,16 @@ export function FormEditorClient({ initialSchema }: FormEditorClientProps) {
                         </div>
                     </div>
                 ))}
-                {schema.length === 0 && <p className="text-center text-muted-foreground">No fields yet. Add one to get started.</p>}
+                {schema.length === 0 && <p className="text-center text-muted-foreground">Aún no hay campos. Agrega uno para comenzar.</p>}
             </CardContent>
         </Card>
         
         <div className="flex justify-between">
             <FieldEditorDialog onSave={handleAddField}>
-                <Button><Plus className="mr-2 h-4 w-4" /> Add Field</Button>
+                <Button><Plus className="mr-2 h-4 w-4" /> Añadir Campo</Button>
             </FieldEditorDialog>
             <Button onClick={handleSaveChanges} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
             </Button>
         </div>
     </div>
@@ -154,45 +154,45 @@ function FieldEditorDialog({
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{field ? 'Edit Field' : 'Add New Field'}</DialogTitle>
+                    <DialogTitle>{field ? 'Editar Campo' : 'Añadir Nuevo Campo'}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="type" className="text-right">Type</Label>
+                        <Label htmlFor="type" className="text-right">Tipo</Label>
                         <Select value={type} onValueChange={(v: FormFieldType) => setType(v)}>
                             <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select field type" />
+                                <SelectValue placeholder="Selecciona el tipo de campo" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="text">Text</SelectItem>
-                                <SelectItem value="email">Email</SelectItem>
-                                <SelectItem value="textarea">Textarea</SelectItem>
-                                <SelectItem value="number">Number</SelectItem>
-                                <SelectItem value="date">Date</SelectItem>
-                                <SelectItem value="select">Select</SelectItem>
+                                <SelectItem value="text">Texto</SelectItem>
+                                <SelectItem value="email">Correo Electrónico</SelectItem>
+                                <SelectItem value="textarea">Área de texto</SelectItem>
+                                <SelectItem value="number">Número</SelectItem>
+                                <SelectItem value="date">Fecha</SelectItem>
+                                <SelectItem value="select">Selección</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="label" className="text-right">Label</Label>
+                        <Label htmlFor="label" className="text-right">Etiqueta</Label>
                         <Input id="label" value={label} onChange={e => setLabel(e.target.value)} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="placeholder" className="text-right">Placeholder</Label>
+                        <Label htmlFor="placeholder" className="text-right">Marcador de posición</Label>
                         <Input id="placeholder" value={placeholder} onChange={e => setPlaceholder(e.target.value)} className="col-span-3" />
                     </div>
                     {type === 'select' && <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="options" className="text-right">Options</Label>
-                        <Input id="options" placeholder="Option1, Option2" value={options} onChange={e => setOptions(e.target.value)} className="col-span-3" />
+                        <Label htmlFor="options" className="text-right">Opciones</Label>
+                        <Input id="options" placeholder="Opción1, Opción2" value={options} onChange={e => setOptions(e.target.value)} className="col-span-3" />
                     </div>}
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Required</Label>
+                        <Label className="text-right">Requerido</Label>
                         <Checkbox checked={required} onCheckedChange={(c) => setRequired(!!c)} className="col-span-3 justify-self-start" />
                     </div>
                 </div>
                 <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                    <Button onClick={handleSave}>Save</Button>
+                    <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+                    <Button onClick={handleSave}>Guardar</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
