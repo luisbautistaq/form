@@ -1,10 +1,13 @@
 import "server-only";
 import * as admin from 'firebase-admin';
 
-// Solo inicializa la app si no hay ninguna aplicación de Firebase ya inicializada.
+let app: admin.app.App;
+
 if (!admin.apps.length) {
-  admin.initializeApp();
+  app = admin.initializeApp();
+} else {
+  app = admin.app();
 }
 
-export const db = admin.firestore();
-export const auth = admin.auth();
+export const db = admin.firestore(app);
+export const auth = admin.auth(app);
