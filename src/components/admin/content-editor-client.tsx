@@ -17,7 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import type { SiteContent } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { updateSiteContent } from "@/lib/actions";
+import { useFirestore } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
+
 
 interface ContentEditorClientProps {
   initialContent: SiteContent;
@@ -33,29 +37,36 @@ const formSchema = z.object({
 
 export function ContentEditorClient({ initialContent }: ContentEditorClientProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialContent,
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const result = await updateSiteContent(values);
-      if (result.success) {
+    const contentRef = doc(firestore, 'landing_page_contents/main');
+    
+    setDoc(contentRef, values, { merge: true })
+      .then(() => {
         toast({
           title: "¡Éxito!",
           description: "El contenido del sitio ha sido actualizado.",
         });
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "¡Uy! Algo salió mal.",
-        description: error instanceof Error ? error.message : "Hubo un problema al guardar tus cambios.",
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: contentRef.path,
+          operation: 'update',
+          requestResourceData: values,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+
+        toast({
+          variant: "destructive",
+          title: "¡Uy! Algo salió mal.",
+          description: "Hubo un problema al guardar tus cambios.",
+        });
       });
-    }
   }
 
   return (

@@ -17,8 +17,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FormField as FormFieldType } from "@/lib/types";
-import { submitForm } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
+import { useFirestore } from "@/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
+
+const FORM_ID = "main_contact_form";
 
 interface DynamicFormProps {
   formSchema: FormFieldType[];
@@ -28,6 +33,7 @@ interface DynamicFormProps {
 
 export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicFormProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
 
   const generateSchema = (fields: FormFieldType[]) => {
     const schema: { [key: string]: z.ZodType<any, any> } = {};
@@ -67,24 +73,37 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
   });
 
   async function onSubmit(data: FormValues) {
-    try {
-      const result = await submitForm(data);
-      if (result.success) {
+    const submissionsCollection = collection(firestore, `forms/${FORM_ID}/form_submissions`);
+    const payload = {
+      formData: data,
+      submissionDate: serverTimestamp(),
+    };
+
+    addDoc(submissionsCollection, payload)
+      .then(() => {
         toast({
           title: "¡Éxito!",
           description: "Tu formulario ha sido enviado.",
         });
         form.reset();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "¡Uy! Algo salió mal.",
-        description: error instanceof Error ? error.message : "Hubo un problema con tu envío.",
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: submissionsCollection.path,
+          operation: 'create',
+          requestResourceData: payload,
+        });
+
+        // Emite el error para que el listener global lo capture.
+        errorEmitter.emit('permission-error', permissionError);
+
+        // Muestra un toast genérico al usuario.
+        toast({
+          variant: "destructive",
+          title: "¡Uy! Algo salió mal.",
+          description: "Hubo un problema con tu envío. Por favor, inténtalo de nuevo más tarde.",
+        });
       });
-    }
   }
 
   const renderField = (fieldConfig: FormFieldType, formField: any) => {

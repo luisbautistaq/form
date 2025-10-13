@@ -18,14 +18,19 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { updateFormSchema } from '@/lib/actions';
 import { Plus, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface FormEditorClientProps {
   initialSchema: FormField[];
+  formId: string;
 }
 
-export function FormEditorClient({ initialSchema }: FormEditorClientProps) {
+export function FormEditorClient({ initialSchema, formId }: FormEditorClientProps) {
+  const firestore = useFirestore();
   const [schema, setSchema] = useState<FormField[]>(initialSchema.sort((a,b) => a.order - b.order));
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -60,18 +65,27 @@ export function FormEditorClient({ initialSchema }: FormEditorClientProps) {
   
   const handleSaveChanges = async () => {
     setIsSaving(true);
-    try {
-        const result = await updateFormSchema(schema);
-        if (result.success) {
-          toast({ title: "Éxito", description: "El esquema del formulario se actualizó correctamente." });
-        } else {
-          throw new Error(result.message);
-        }
-    } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "No se pudieron guardar los cambios." });
-    } finally {
+    const formDocRef = doc(firestore, `forms/${formId}`);
+    const payload = { 
+        schema: JSON.stringify(schema)
+    };
+
+    setDoc(formDocRef, payload, { merge: true })
+      .then(() => {
+        toast({ title: "Éxito", description: "El esquema del formulario se actualizó correctamente." });
+      })
+      .catch((serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: formDocRef.path,
+            operation: 'update',
+            requestResourceData: payload,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+      })
+      .finally(() => {
         setIsSaving(false);
-    }
+      });
   };
 
   return (
