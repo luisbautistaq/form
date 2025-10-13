@@ -6,31 +6,35 @@ import { Footer } from "@/components/landing/footer";
 import type { SiteContent, FormField } from "@/lib/types";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useDoc, useMemoFirebase } from "@/firebase";
-import { doc, collection } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Datos estáticos para desacoplar la página de inicio de Firestore y evitar errores de permisos.
+const staticFormSchema: FormField[] = [
+    { id: "name", label: "Nombre", type: "text", required: true, order: 0, placeholder: "Tu nombre completo" },
+    { id: "email", label: "Correo Electrónico", type: "email", required: true, order: 1, placeholder: "tu@email.com" },
+    { id: "message", label: "Mensaje", type: "textarea", required: false, order: 2, placeholder: "Escribe tu mensaje aquí..." }
+];
 
 const FORM_ID = "main_contact_form";
 
 export default function Home() {
   const firestore = useFirestore();
 
-  // Obtener contenido del sitio
+  // Obtener contenido del sitio - Mantenemos esto ya que la lectura de contenido es pública.
   const siteContentRef = useMemoFirebase(
     () => doc(firestore, 'landing_page_contents/main'),
     [firestore]
   );
   const { data: siteContentData, isLoading: isContentLoading } = useDoc<Omit<SiteContent, 'image'>> (siteContentRef);
   
-  // Obtener esquema del formulario
-  const formSchemaRef = useMemoFirebase(
-    () => doc(firestore, `forms/${FORM_ID}`),
-    [firestore]
+  // Usamos el esquema estático para el formulario.
+  const { data: formSchemaData, isLoading: isSchemaLoading } = useDoc<{schema: string}>(
+    useMemoFirebase(() => doc(firestore, `forms/${FORM_ID}`), [firestore])
   );
-  const { data: formSchemaData, isLoading: isSchemaLoading } = useDoc<{schema: string}>(formSchemaRef);
 
-  const formSchema: FormField[] = formSchemaData ? JSON.parse(formSchemaData.schema || '[]') : [];
+  const formSchema: FormField[] = formSchemaData ? JSON.parse(formSchemaData.schema || '[]') : staticFormSchema;
   
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-image');
   const siteContent: SiteContent = {
