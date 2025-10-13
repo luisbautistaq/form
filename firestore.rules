@@ -1,35 +1,29 @@
 /**
- * @file Firestore Security Rules for FormForge
- *
- * Core Philosophy:
- * This ruleset prioritizes security through explicit authorization checks,
- * focusing on admin-only content management and allowing public form submissions.
+ * @file Overview
+ * This ruleset allows only authenticated users to submit forms and grants full access to admin users.
  *
  * Data Structure:
- * - /landing_page_contents/{landingPageContentId}: Stores landing page content, managed by admins.
- * - /forms/{formId}: Stores form definitions, managed by admins.
- * - /forms/{formId}/form_submissions/{formSubmissionId}: Stores form submissions. Publicly writable.
- * - /admin_users/{adminUserId}: Presence grants admin privileges.
+ * - /landing_page_contents/{landingPageContentId}: Stores landing page content.
+ * - /forms/{formId}: Stores form definitions.
+ * - /forms/{formId}/form_submissions/{formSubmissionId}: Stores form submissions as a subcollection of forms.
+ * - /admin_users/{adminUserId}: Stores admin user profiles; existence grants admin privileges.
  *
  * Key Security Decisions:
- * - Public form submissions are allowed for all forms.
- * - Only admins can create, update, and delete landing pages and form definitions.
- * - Listing of documents is generally allowed unless explicitly restricted.
- *
- * Denormalization for Authorization:
- * - Admin status is determined by the presence of a document in the `/admin_users/{uid}` collection,
- *   eliminating the need for `get()` calls to a separate roles collection.
+ * - All write access is limited to authenticated users or admins.
+ * - Admin status is determined by the existence of a document in /admin_users/{uid}.
+ * - Read access to landing pages is public.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants admin access to manage landing page content.
+     * @description Grants public read access and admin-only write access to landing page content.
      * @path /landing_page_contents/{landingPageContentId}
-     * @allow (create, update, delete) if request.auth exists and the user is an admin.
-     * @deny (create, update, delete) if request.auth does not exist.
-     * @principle Enforces admin-only write access.
+     * @allow (get, list): Public access to read landing page content.
+     * @allow (create, update, delete): Only admin users can modify landing page content.
+     * @deny (create, update, delete): Non-admin users cannot modify landing page content.
+     * @principle Allows public read access while restricting writes to admins.
      */
     match /landing_page_contents/{landingPageContentId} {
       allow get, list: if true;
@@ -37,11 +31,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants admin access to manage form definitions.
+     * @description Grants public read access and admin-only write access to form definitions.
      * @path /forms/{formId}
-     * @allow (create, update, delete) if request.auth exists and the user is an admin.
-     * @deny (create, update, delete) if request.auth does not exist.
-     * @principle Enforces admin-only write access.
+     * @allow (get, list): Public access to read form definitions.
+     * @allow (create, update, delete): Only admin users can modify form definitions.
+     * @deny (create, update, delete): Non-admin users cannot modify form definitions.
+     * @principle Allows public read access while restricting writes to admins.
      */
     match /forms/{formId} {
       allow get, list: if true;
@@ -49,38 +44,48 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows anyone to submit forms.
+     * @description Allows authenticated users to create form submissions and admins to read all submissions.
      * @path /forms/{formId}/form_submissions/{formSubmissionId}
-     * @allow create if request.auth exists (user is logged in).
-     * @deny create if request.auth does not exist (user is not logged in).
-     * @principle Allows any signed-in user to create form submissions.
+     * @allow (create): Authenticated users can create form submissions.
+     * @allow (get, list): Only admin users can read form submissions.
+     * @deny (create): Unauthenticated users cannot create form submissions.
+     * @deny (get, list, update, delete): Non-admin users cannot read or modify form submissions.
+     * @principle Restricts creation to authenticated users and reads to admins.
      */
     match /forms/{formId}/form_submissions/{formSubmissionId} {
-      allow get, list: if true;
       allow create: if isSignedIn();
+      allow get, list: if isAdmin();
       allow update, delete: if false;
     }
 
     /**
-     * @description Grants admin privileges based on the existence of an admin user document.
+     * @description Allows only admins to manage admin user profiles.
      * @path /admin_users/{adminUserId}
-     * @allow get, list: if false;
-     * @allow create: if request.auth.uid == adminUserId;
-     * @allow update, delete: if false;
-     * @principle Admin privileges are granted by the presence of a document.
+     * @allow (get): Allows only admin users can get other admins user profiles.
+     * @allow (create, update, delete): Only admin users can manage admin user profiles.
+     * @deny (create, update, delete): Non-admin users cannot manage admin user profiles.
+     *
      */
     match /admin_users/{adminUserId} {
       allow get: if isAdmin();
+      allow create, update, delete: if isAdmin();
       allow list: if false;
-      allow create: if request.auth.uid == adminUserId;
-      allow update, delete: if false;
     }
 
-    // Helper functions
+    /**
+     * @description Checks if the user is signed in.
+     * @return True if the user is authenticated, false otherwise.
+     * @principle Ensures that only authenticated users can perform certain actions.
+     */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /**
+     * @description Checks if the user is an admin.
+     * @return True if the user is an admin, false otherwise.
+     * @principle Grants elevated privileges to admin users.
+     */
     function isAdmin() {
       return exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
     }
