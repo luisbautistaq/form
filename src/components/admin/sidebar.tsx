@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -48,11 +49,7 @@ export function AdminSidebar() {
       <SidebarHeader>
         <div className="flex w-full items-center justify-between p-2">
             <Logo className="h-6 w-6 text-primary-foreground"/>
-            <SidebarTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <PanelLeft />
-                </Button>
-            </SidebarTrigger>
+            <SidebarTrigger className="md:hidden" />
         </div>
       </SidebarHeader>
       <SidebarContent>
