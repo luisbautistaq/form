@@ -1,106 +1,87 @@
+/**
+ * @file Overview
+ * This ruleset enforces a role-based access control model where admin privileges are determined by the presence of a document in the `/admin_users/{uid}` collection.
+ *
+ * Data Structure:
+ * - /landing_page_contents/{landingPageContentId}: Stores landing page content.
+ * - /forms/{formId}: Stores form definitions.
+ * - /forms/{formId}/form_submissions/{formSubmissionId}: Stores form submissions as subcollections of forms.
+ * - /admin_users/{adminUserId}: Stores admin user profiles; presence grants admin privileges.
+ *
+ * Key Security Decisions:
+ * - Admin status is determined by the existence of a document in `/admin_users/{uid}`.
+ * - Form submissions are stored as subcollections of forms to simplify secure list operations.
+ * - No user listing is allowed for admin users to prevent information disclosure.
+ *
+ * Denormalization for Authorization:
+ * - The `formId` is denormalized into the `FormSubmission` documents to enable authorization checks without additional `get()` calls.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to landing page content. Only admins can create, update, or delete landing pages.
+     * @description Controls access to landing page content.
      * @path /landing_page_contents/{landingPageContentId}
-     * @allow get, list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isAdmin() && resource != null;
-     * @allow delete: if isAdmin() && resource != null;
-     * @deny get, list: if !isAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isAdmin();
-     * @deny delete: if !isAdmin();
-     * @principle Enforces admin-only access for managing landing page content.
+     * @allow (get, list): Any user can read landing page content.
+     * @allow (create, update, delete): Only admins can modify landing page content.
+     * @deny (create, update, delete): Non-admins cannot modify landing page content.
+     * @principle Role-based access control; admins manage landing page content.
      */
     match /landing_page_contents/{landingPageContentId} {
-      allow get, list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Controls access to form definitions. Only admins can create, update, or delete forms.
+     * @description Controls access to form definitions.
      * @path /forms/{formId}
-     * @allow get, list: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isAdmin() && resource != null;
-     * @allow delete: if isAdmin() && resource != null;
-     * @deny get, list: if !isAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isAdmin();
-     * @deny delete: if !isAdmin();
-     * @principle Enforces admin-only access for managing form definitions.
+     * @allow (get, list): Any user can read form definitions.
+     * @allow (create, update, delete): Only admins can modify form definitions.
+     * @deny (create, update, delete): Non-admins cannot modify form definitions.
+     * @principle Role-based access control; admins manage form definitions.
      */
     match /forms/{formId} {
-      allow get, list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-
-      /**
-       * @description Controls access to form submissions. Anyone can create a form submission; only admins can read, update, or delete submissions.
-       * @path /forms/{formId}/form_submissions/{formSubmissionId}
-       * @allow get, list: if isAdmin();
-       * @allow create: if true;
-       * @allow update: if isAdmin() && resource != null;
-       * @allow delete: if isAdmin() && resource != null;
-       * @deny get, list: if !isAdmin();
-       * @deny update: if !isAdmin();
-       * @deny delete: if !isAdmin();
-       * @principle Allows public submissions while restricting other operations to admins.
-       */
-      match /form_submissions/{formSubmissionId} {
-        allow get, list: if isAdmin();
-        allow create: if true;
-        allow update: if isAdmin();
-        allow delete: if isAdmin();
-      }
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Controls access to admin user profiles. Only admins can create admin user profiles; listing is disallowed to prevent information disclosure.
+     * @description Controls access to form submissions.
+     * @path /forms/{formId}/form_submissions/{formSubmissionId}
+     * @allow (create): Any authenticated user can create a submission for a form.
+     * @allow (get, list, update, delete): Only admins can read, update, or delete submissions.
+     * @deny (get, list, update, delete): Non-admins cannot read, update, or delete submissions.
+     * @principle Role-based access control; admins manage form submissions, authenticated users can submit forms.
+     */
+    match /forms/{formId}/form_submissions/{formSubmissionId} {
+      allow create: if isSignedIn();
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Controls access to admin user profiles.
      * @path /admin_users/{adminUserId}
-     * @allow get: if isAdmin();
-     * @allow create: if isAdmin();
-     * @allow update: if isAdmin() && resource != null;
-     * @allow delete: if isAdmin() && resource != null;
-     * @deny get: if !isAdmin();
-     * @deny create: if !isAdmin();
-     * @deny update: if !isAdmin();
-     * @deny delete: if !isAdmin();
-     * @deny list: if true;
-     * @principle Enforces admin-only access for managing admin user profiles and prevents listing of admin users.
+     * @allow (get): Any user can read admin user profiles.
+     * @allow (create): Only allowed if the authenticated user ID matches the document ID. This allows an admin to create their own profile.
+     * @allow (update, delete): Only admins can modify admin user profiles.
+     * @deny (list): Listing admin users is not allowed.
+     * @principle Role-based access control; admin profile creation is self-administered.
      */
     match /admin_users/{adminUserId} {
-      allow get: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow get: if true;
+      allow create: if isSignedIn() && request.auth.uid == adminUserId;
+      allow update, delete: if isAdmin();
       allow list: if false;
     }
-  }
 
-  // Helper function to check if the user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
-  }
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-  // Helper function to check if the user is an admin based on the existence of an admin profile.
-  function isAdmin() {
-    return exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
-  }
-
-  // Helper function to check if the user owns the document (based on document ID and user ID).
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-
-  //Helper function to check if the user is an existing owner of the document
-  function isExistingOwner(userId) {
-    return (isOwner(userId) && resource.data.userId == userId);
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
   }
 }
