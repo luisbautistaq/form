@@ -17,24 +17,15 @@ const staticFormSchema: FormField[] = [
     { id: "message", label: "Mensaje", type: "textarea", required: false, order: 2, placeholder: "Escribe tu mensaje aquí..." }
 ];
 
-const FORM_ID = "main_contact_form";
-
 export default function Home() {
   const firestore = useFirestore();
 
   // Obtener contenido del sitio - Mantenemos esto ya que la lectura de contenido es pública.
   const siteContentRef = useMemoFirebase(
-    () => doc(firestore, 'landing_page_contents/main'),
+    () => firestore ? doc(firestore, 'landing_page_contents/main') : null,
     [firestore]
   );
   const { data: siteContentData, isLoading: isContentLoading } = useDoc<Omit<SiteContent, 'image'>> (siteContentRef);
-  
-  // Usamos el esquema estático para el formulario.
-  const { data: formSchemaData, isLoading: isSchemaLoading } = useDoc<{schema: string}>(
-    useMemoFirebase(() => doc(firestore, `forms/${FORM_ID}`), [firestore])
-  );
-
-  const formSchema: FormField[] = formSchemaData ? JSON.parse(formSchemaData.schema || '[]') : staticFormSchema;
   
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-image');
   const siteContent: SiteContent = {
@@ -45,7 +36,7 @@ export default function Home() {
     formDescription: siteContentData?.formDescription || "Rellena el siguiente formulario y nos pondremos en contacto contigo.",
   }
 
-  if (isContentLoading || isSchemaLoading) {
+  if (isContentLoading) {
     return (
       <div className="flex min-h-dvh flex-col bg-background">
         <Header />
@@ -77,7 +68,7 @@ export default function Home() {
     <div className="flex min-h-dvh flex-col bg-background">
       <Header />
       <main className="flex-1">
-        <HeroSection siteContent={siteContent} formSchema={formSchema} />
+        <HeroSection siteContent={siteContent} formSchema={staticFormSchema} />
       </main>
       <Footer />
     </div>
