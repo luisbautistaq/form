@@ -49,11 +49,9 @@ export function AdminSidebar() {
         <div className="flex w-full items-center justify-between p-2">
             <Logo className="h-6 w-6 text-primary-foreground"/>
             <SidebarTrigger asChild>
-                <div>
-                    <Button variant="ghost" size="icon" className="md:hidden">
-                        <PanelLeft />
-                    </Button>
-                </div>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                    <PanelLeft />
+                </Button>
             </SidebarTrigger>
         </div>
       </SidebarHeader>
