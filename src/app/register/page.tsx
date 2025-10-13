@@ -1,9 +1,9 @@
-import { LoginForm } from "@/components/auth/login-form";
+import { RegisterForm } from "@/components/auth/register-form";
 import { Logo } from "@/components/icons/logo";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4">
       <div className="mx-auto w-full max-w-sm">
@@ -12,17 +12,17 @@ export default function LoginPage() {
         </div>
         <Card>
             <CardHeader className="text-center">
-                <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
-                <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+                <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
+                <CardDescription>Enter your details to get started</CardDescription>
             </CardHeader>
             <CardContent>
-                <LoginForm />
+                <RegisterForm />
             </CardContent>
         </Card>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            Sign up
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Sign in
           </Link>
         </p>
       </div>
