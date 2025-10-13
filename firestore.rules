@@ -1,130 +1,114 @@
 /**
- * @file Firebase Security Rules for FormForge application.
+ * @fileOverview Firestore Security Rules for FormForge.
  *
- * @Core Philosophy:
- * This ruleset implements a role-based access control system with admin privileges determined by the presence of an AdminUser document.
- * Form submissions are stored as subcollections and accessible only to authenticated users and admins.
- * Landing page content and forms are accessible and editable only by admins.
+ * Core Philosophy:
+ * This ruleset enforces role-based access control, with admin users having broader permissions.
+ * All write operations require authentication.  Read operations are generally public unless admin access is required.
  *
- * @Data Structure:
- * - /landing_page_contents/{landingPageContentId}: Stores landing page content. Admin-only access.
- * - /forms/{formId}: Stores form definitions. Admin-only access.
- * - /forms/{formId}/form_submissions/{formSubmissionId}: Stores form submissions. Accessible to authenticated users and admins.
- * - /admin_users/{adminUserId}: Presence of a document grants admin privileges.
+ * Data Structure:
+ * - /landing_page_contents/{landingPageContentId}: Stores landing page content. Admin-only write access.
+ * - /forms/{formId}: Stores form definitions. Admin-only write access.
+ * - /forms/{formId}/form_submissions/{formSubmissionId}: Stores form submissions. Authenticated users can create submissions.
+ * - /admin_users/{adminUserId}: Stores admin user profiles. The existence of a document grants admin privileges.
  *
- * @Key Security Decisions:
- * - Admin privileges are granted based on the existence of an AdminUser document.
- * - Form submissions are linked to forms via subcollections, which allows for secure list operations.
- * - Data validation is minimized in this prototyping phase to allow for rapid iteration. Only critical relationship fields are validated.
- * - Listing all submissions is disallowed. Only listing submissions under a specific form is allowed.
- *
- * @Denormalization for Authorization:
- * - Admin status is determined by the presence of a document in `/admin_users/{uid}`, avoiding `get()` calls.
+ * Key Security Decisions:
+ * - Only authenticated users can submit forms.
+ * - Admin status is determined by the presence of a document in the `/admin_users/{adminUserId}` collection, eliminating the need for `get()` calls in the rules.
+ * - Denormalization is used to simplify rules (e.g., storing `formId` in `FormSubmission`).
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user is an admin.
-     * @return {bool} True if the user is an admin, false otherwise.
-     */
-    function isAdmin() {
-      return exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
-    }
-
-    /**
-     * @description Checks if the user is the owner of the document (admin).
-     * @param {string} userId The user ID to check.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user is the existing owner of the document (admin).
-     * @param {string} userId The user ID to check.
-     * @return {bool} True if the user is the owner and the document exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rules for landing page contents.
+     * @description Controls access to landing page content. Only admins can create, update, or delete landing page content.
      * @path /landing_page_contents/{landingPageContentId}
-     * @allow (create) If the user is an admin, they can create landing page content.
-     * @deny (create) If the user is not an admin, they cannot create landing page content.
-     * @allow (get) If the user is an admin, they can get landing page content.
-     * @deny (get) If the user is not an admin, they cannot get landing page content.
-     * @principle Enforces admin-only access for landing page content.
+     * @allow get, list: if true;
+     * @allow create: if isAdmin(request.auth.uid);
+     * @allow update: if isAdmin(request.auth.uid) && resource != null;
+     * @allow delete: if isAdmin(request.auth.uid) && resource != null;
+     * @deny create: if !isAdmin(request.auth.uid);
+     * @deny update: if !isAdmin(request.auth.uid);
+     * @deny delete: if !isAdmin(request.auth.uid);
+     * @principle Enforces admin-only access for managing landing page content.
      */
     match /landing_page_contents/{landingPageContentId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow get, list: if true;
+      allow create: if isAdmin(request.auth.uid);
+      allow update: if isAdmin(request.auth.uid) && resource != null;
+      allow delete: if isAdmin(request.auth.uid) && resource != null;
     }
 
     /**
-     * @description Rules for forms.
+     * @description Controls access to form definitions. Only admins can create, update, or delete forms.
      * @path /forms/{formId}
-     * @allow (create) If the user is an admin, they can create forms.
-     * @deny (create) If the user is not an admin, they cannot create forms.
-     * @allow (get) If the user is an admin, they can get forms.
-     * @deny (get) If the user is not an admin, they cannot get forms.
-     * @principle Enforces admin-only access for forms.
+     * @allow get, list: if true;
+     * @allow create: if isAdmin(request.auth.uid);
+     * @allow update: if isAdmin(request.auth.uid) && resource != null;
+     * @allow delete: if isAdmin(request.auth.uid) && resource != null;
+     * @deny create: if !isAdmin(request.auth.uid);
+     * @deny update: if !isAdmin(request.auth.uid);
+     * @deny delete: if !isAdmin(request.auth.uid);
+     * @principle Enforces admin-only access for managing form definitions.
      */
     match /forms/{formId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow get, list: if true;
+      allow create: if isAdmin(request.auth.uid);
+      allow update: if isAdmin(request.auth.uid) && resource != null;
+      allow delete: if isAdmin(request.auth.uid) && resource != null;
+
+      /**
+       * @description Controls access to form submissions. Authenticated users can create submissions for a form. Admins can read and list submissions.
+       * @path /forms/{formId}/form_submissions/{formSubmissionId}
+       * @allow get, list: if isAdmin(request.auth.uid);
+       * @allow create: if isSignedIn() && request.resource.data.formId == formId;
+       * @allow update: if false;
+       * @allow delete: if false;
+       * @deny create: if !isSignedIn();
+       * @deny get: if !isAdmin(request.auth.uid);
+       * @deny list: if !isAdmin(request.auth.uid);
+       * @deny update: if true;
+       * @deny delete: if true;
+       * @principle Allows authenticated users to create form submissions and admins to manage them.
+       */
+      match /form_submissions/{formSubmissionId} {
+        allow get, list: if isAdmin(request.auth.uid);
+        allow create: if isSignedIn() && request.resource.data.formId == formId;
+        allow update: if false;
+        allow delete: if false;
+      }
     }
 
     /**
-     * @description Rules for form submissions.
-     * @path /forms/{formId}/form_submissions/{formSubmissionId}
-     * @allow (create) If the user is signed in, they can create form submissions.
-     * @deny (create) If the user is not signed in, they cannot create form submissions.
-     * @allow (get) If the user is an admin, they can get form submissions.
-     * @deny (get) If the user is not an admin, they cannot get form submissions.
-     * @principle Enforces authenticated user access for form submissions creation and admin access for reading.
+     * @description Controls access to admin user profiles. Only the user themselves can create their profile, and only if they don't already have one.  No updates or deletes are allowed through the rules; these operations are handled through backend functions.
+     * @path /admin_users/{adminUserId}
+     * @allow get, list: if false;
+     * @allow create: if isOwner(adminUserId) && !resource.exists;
+     * @allow update: if false;
+     * @allow delete: if false;
+     * @deny get: if true;
+     * @deny list: if true;
+     * @deny update: if true;
+     * @deny delete: if true;
+     * @principle Enforces that only the user themselves can create their admin profile, and only once.
      */
-    match /forms/{formId}/form_submissions/{formSubmissionId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isSignedIn();
+    match /admin_users/{adminUserId} {
+      allow get, list: if false;
+      allow create: if isOwner(adminUserId) && !resource.exists;
       allow update: if false;
       allow delete: if false;
     }
 
-    /**
-     * @description Rules for admin users.
-     * @path /admin_users/{adminUserId}
-     * @allow (create) If the user ID matches the document ID, they can create their admin user profile. This allows self-registration.
-     * @deny (create) If the user ID does not match the document ID, they cannot create an admin user profile.
-     * @allow (get) If the user is the owner (admin), they can get their admin user profile.
-     * @deny (get) If the user is not the owner (admin), they cannot get their admin user profile.
-     * @principle Enforces owner-only access for admin user profiles.
-     */
-    match /admin_users/{adminUserId} {
-      allow get: if isOwner(adminUserId);
-      allow list: if false;
-      allow create: if isOwner(adminUserId);
-      allow update: if isExistingOwner(adminUserId);
-      allow delete: if isExistingOwner(adminUserId);
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdmin(userId) {
+      return exists(/databases/$(database)/documents/admin_users/$(userId));
     }
   }
 }
