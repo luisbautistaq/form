@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type FormFieldType = 'text' | 'email' | 'textarea' | 'number' | 'date' | 'select';
 
 export interface FormField {
@@ -22,4 +24,7 @@ export interface FormSubmission {
   id: string;
   createdAt: Date;
   data: Record<string, any>;
+  // Firestore specific fields
+  submissionDate?: Timestamp;
+  formData?: Record<string, any>;
 }
