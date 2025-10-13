@@ -47,7 +47,10 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
           zodField = z.string();
       }
       if (field.required) {
-        zodField = zodField.min(1, { message: `${field.label} es obligatorio.` });
+        // Para los campos de texto, usamos .min(1)
+        if(field.type === 'text' || field.type === 'textarea' || field.type === 'select'){
+            zodField = zodField.min(1, { message: `${field.label} es obligatorio.` });
+        }
       } else {
         zodField = zodField.optional();
       }
@@ -66,12 +69,16 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
 
   async function onSubmit(data: FormValues) {
     try {
-      await submitForm(data);
-      toast({
-        title: "¡Éxito!",
-        description: "Tu formulario ha sido enviado.",
-      });
-      form.reset();
+      const result = await submitForm(data);
+      if (result.success) {
+        toast({
+          title: "¡Éxito!",
+          description: "Tu formulario ha sido enviado.",
+        });
+        form.reset();
+      } else {
+        throw new Error(result.message);
+      }
     } catch (error) {
       toast({
         variant: "destructive",

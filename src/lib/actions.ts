@@ -1,16 +1,24 @@
 "use server";
 
 import { z } from "zod";
-// In a real app, you'd import your Firebase admin instance here
-// to interact with Firestore securely on the server.
-// For example: import { db, auth } from "@/lib/firebase-admin";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, orderBy, query } from "firebase/firestore";
+import type { FormSubmission } from "./types";
+
 
 export async function submitForm(data: unknown) {
-  // Here you would validate the data and save it to your Firestore 'submissions' collection.
   console.log("Formulario enviado:", data);
-  // Example: await db.collection('submissions').add({ ...data, createdAt: new Date() });
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate DB latency
-  return { success: true, message: "Formulario enviado correctamente." };
+  try {
+    const submissionsCollection = collection(db, "submissions");
+    await addDoc(submissionsCollection, {
+      ...data,
+      createdAt: new Date(),
+    });
+    return { success: true, message: "Formulario enviado correctamente." };
+  } catch (error) {
+    console.error("Error al guardar en Firestore:", error);
+    return { success: false, message: "Hubo un problema con tu envío." };
+  }
 }
 
 export async function adminLogin(data: unknown) {
@@ -24,33 +32,43 @@ export async function adminLogin(data: unknown) {
     return { success: false, message: "Entrada no válida." };
   }
   
-  // This is a placeholder. In a real app, you would not handle auth this way on the server action side directly.
-  // You would use Firebase client SDK on the login page to sign in and this action might be used for other checks.
-  // For scaffolding purposes, we simulate a successful login.
   console.log("Intento de inicio de sesión de administrador:", parsed.data.email);
   await new Promise(resolve => setTimeout(resolve, 1000));
   return { success: true, message: "Inicio de sesión exitoso. Redirigiendo..." };
 }
 
 export async function adminLogout() {
-  // On the client, you'd call Firebase's signOut() method.
-  // This server action is a conceptual placeholder.
   console.log("Cierre de sesión de administrador");
   return { success: true };
 }
 
 // --- Placeholder actions for admin functionality ---
 
-export async function getSubmissions() {
-  console.log("Obteniendo envíos...");
-  // Example: const snapshot = await db.collection('submissions').orderBy('createdAt', 'desc').get();
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
-  // Mock data
-  return [
-    { id: '1', createdAt: new Date(), data: { name: 'Alice Johnson', email: 'alice@example.com', interest: 'Soporte' } },
-    { id: '2', createdAt: new Date(), data: { name: 'Bob Williams', email: 'bob@example.com', interest: 'Consulta de Producto' } },
-  ];
+export async function getSubmissions(): Promise<FormSubmission[]> {
+  console.log("Obteniendo envíos desde Firestore...");
+  try {
+    const submissionsCollection = collection(db, "submissions");
+    const q = query(submissionsCollection, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      return [];
+    }
+
+    const submissions = snapshot.docs.map(doc => {
+      const docData = doc.data();
+      return {
+        id: doc.id,
+        createdAt: docData.createdAt.toDate(), // Convert Firestore Timestamp to Date
+        data: docData,
+      };
+    });
+
+    return submissions;
+  } catch (error) {
+    console.error("Error al obtener envíos desde Firestore:", error);
+    return []; // Return empty on error
+  }
 }
 
 export async function getFormSchema() {
