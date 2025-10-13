@@ -5,7 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +32,7 @@ export function RegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,10 +46,31 @@ export function RegisterForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, {
+      const user = userCredential.user;
+
+      if (user) {
+        // Actualizar el perfil de Firebase Auth
+        await updateProfile(user, {
             displayName: values.name,
         });
+
+        // Crear un documento en la colección 'admin_users' para otorgar privilegios de administrador.
+        const adminUserRef = doc(firestore, "admin_users", user.uid);
+        const adminPayload = {
+            username: values.name,
+            email: values.email,
+        };
+
+        setDoc(adminUserRef, adminPayload)
+            .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: adminUserRef.path,
+                    operation: 'create',
+                    requestResourceData: adminPayload,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                console.error("Error al crear el documento de administrador:", serverError);
+            });
       }
       
       toast({
