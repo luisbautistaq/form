@@ -13,18 +13,20 @@ export default function ResponsesPage() {
     const firestore = useFirestore();
     
     const formSchemaRef = useMemoFirebase(
-        () => doc(firestore, `forms/${FORM_ID}`),
+        () => firestore ? doc(firestore, `forms/${FORM_ID}`) : null,
         [firestore]
     );
     const { data: formSchemaData, isLoading: schemaLoading } = useDoc<{schema: string}>(formSchemaRef);
 
     const submissionsQuery = useMemoFirebase(
-        () => collection(firestore, `forms/${FORM_ID}/form_submissions`),
+        () => firestore ? collection(firestore, `forms/${FORM_ID}/form_submissions`) : null,
         [firestore]
     );
     const { data: submissionsData, isLoading: submissionsLoading } = useCollection<FormSubmissionType>(submissionsQuery);
 
-    if (schemaLoading || submissionsLoading) {
+    const isLoading = schemaLoading || submissionsLoading;
+
+    if (isLoading) {
         return (
              <div className="space-y-6">
                 <div>

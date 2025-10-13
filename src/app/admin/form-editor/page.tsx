@@ -11,14 +11,12 @@ const FORM_ID = "main_contact_form";
 export default function FormEditorPage() {
     const firestore = useFirestore();
     const formSchemaRef = useMemoFirebase(
-        () => doc(firestore, `forms/${FORM_ID}`),
+        () => firestore ? doc(firestore, `forms/${FORM_ID}`) : null,
         [firestore]
     );
     const { data, isLoading } = useDoc<{schema: string}>(formSchemaRef);
 
-    const schema: FormField[] = data ? JSON.parse(data.schema || '[]') : [];
-
-    if (isLoading) {
+    if (isLoading || !firestore) {
         return (
             <div className="space-y-6">
                 <div>
@@ -30,6 +28,8 @@ export default function FormEditorPage() {
         );
     }
     
+    const schema: FormField[] = data ? JSON.parse(data.schema || '[]') : [];
+
     return (
         <div className="space-y-6">
             <div>

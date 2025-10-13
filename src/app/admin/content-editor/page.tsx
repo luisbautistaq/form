@@ -9,20 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ContentEditorPage() {
     const firestore = useFirestore();
     const contentRef = useMemoFirebase(
-        () => doc(firestore, 'landing_page_contents/main'),
+        () => firestore ? doc(firestore, 'landing_page_contents/main') : null,
         [firestore]
     );
     const { data, isLoading } = useDoc<SiteContent>(contentRef);
 
-    const initialContent: SiteContent = data || {
-        headline: "",
-        description: "",
-        image: "",
-        formTitle: "",
-        formDescription: "",
-    };
-
-    if (isLoading) {
+    if (isLoading || !firestore) {
         return (
             <div className="space-y-6">
                 <div>
@@ -33,6 +25,14 @@ export default function ContentEditorPage() {
             </div>
         )
     }
+
+    const initialContent: SiteContent = data || {
+        headline: "",
+        description: "",
+        image: "",
+        formTitle: "",
+        formDescription: "",
+    };
 
     return (
         <div className="space-y-6">
