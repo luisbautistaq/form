@@ -3,8 +3,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth as useFirebaseAuth } from '@/hooks/use-auth';
 import {
   Sidebar,
   SidebarHeader,
@@ -28,11 +27,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronsUpDown, Edit, FileText, Inbox, LogOut, Settings, PanelLeft } from 'lucide-react';
+import { useAuth } from '@/firebase';
+
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
+  const auth = useAuth();
+
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -49,7 +52,9 @@ export function AdminSidebar() {
       <SidebarHeader>
         <div className="flex w-full items-center justify-between p-2">
             <Logo className="h-6 w-6 text-primary-foreground"/>
-            <SidebarTrigger className="md:hidden" />
+            <SidebarTrigger className="md:hidden" asChild>
+              <Button variant="ghost" size="icon"><PanelLeft/></Button>
+            </SidebarTrigger>
         </div>
       </SidebarHeader>
       <SidebarContent>

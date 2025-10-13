@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/firebase";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ const formSchema = z.object({
 export function RegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

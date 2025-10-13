@@ -38,10 +38,12 @@ export default function AdminLayout({
 
   return (
     <SidebarProvider>
-      <AdminSidebar />
-      <main className="flex-1 flex-col bg-muted/40 p-4 md:p-8 lg:p-10">
-        {children}
-      </main>
+        <div className="flex">
+            <AdminSidebar />
+            <main className="flex-1 flex-col bg-muted/40 p-4 md:p-8 lg:p-10">
+                {children}
+            </main>
+        </div>
     </SidebarProvider>
   );
 }
