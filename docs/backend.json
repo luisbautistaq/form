@@ -1,0 +1,199 @@
+{
+  "entities": {
+    "FormSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FormSubmission",
+      "type": "object",
+      "description": "Represents a single submission of a dynamic form.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the form submission."
+        },
+        "formId": {
+          "type": "string",
+          "description": "Reference to the Form entity that this submission belongs to. (Relationship: Form 1:N FormSubmission)"
+        },
+        "submissionDate": {
+          "type": "string",
+          "description": "Date and time when the form was submitted.",
+          "format": "date-time"
+        },
+        "formData": {
+          "type": "string",
+          "description": "JSON string containing the form data."
+        }
+      },
+      "required": [
+        "id",
+        "formId",
+        "submissionDate",
+        "formData"
+      ]
+    },
+    "Form": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Form",
+      "type": "object",
+      "description": "Represents a dynamic form definition.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the form."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the form."
+        },
+        "schema": {
+          "type": "string",
+          "description": "JSON schema defining the form structure."
+        },
+        "landingPageContentId": {
+          "type": "string",
+          "description": "Reference to the LandingPageContent entity associated with this form. (Relationship: LandingPageContent 1:1 Form)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "schema"
+      ]
+    },
+    "LandingPageContent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LandingPageContent",
+      "type": "object",
+      "description": "Represents the content of the landing page associated with a form.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the landing page content."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the landing page."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the landing page."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the image displayed on the landing page.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description"
+      ]
+    },
+    "AdminUser": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AdminUser",
+      "type": "object",
+      "description": "Represents an administrator user with access to the admin panel.  Note:  This entity only stores user profile information and is not intended for authentication credentials.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the administrator user."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the administrator user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the administrator user.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/landing_page_contents/{landingPageContentId}",
+        "definition": {
+          "entityName": "LandingPageContent",
+          "schema": {
+            "$ref": "#/backend/entities/LandingPageContent"
+          },
+          "description": "Stores landing page content. Accessible and editable by admins.",
+          "params": [
+            {
+              "name": "landingPageContentId",
+              "description": "Unique identifier for the landing page content."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/forms/{formId}",
+        "definition": {
+          "entityName": "Form",
+          "schema": {
+            "$ref": "#/backend/entities/Form"
+          },
+          "description": "Stores form definitions.  Accessible and editable by admins.",
+          "params": [
+            {
+              "name": "formId",
+              "description": "Unique identifier for the form."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/forms/{formId}/form_submissions/{formSubmissionId}",
+        "definition": {
+          "entityName": "FormSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/FormSubmission"
+          },
+          "description": "Stores form submissions as a subcollection of the form. Includes denormalized 'formId' for authorization independence.",
+          "params": [
+            {
+              "name": "formId",
+              "description": "The ID of the form to which the submission belongs."
+            },
+            {
+              "name": "formSubmissionId",
+              "description": "Unique identifier for the form submission."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admin_users/{adminUserId}",
+        "definition": {
+          "entityName": "AdminUser",
+          "schema": {
+            "$ref": "#/backend/entities/AdminUser"
+          },
+          "description": "Stores admin user profiles. The existence of a document grants admin privileges.",
+          "params": [
+            {
+              "name": "adminUserId",
+              "description": "Unique identifier for the administrator user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support a dynamic form and landing page application, FormForge, with a clear separation of concerns and a focus on secure and efficient data access.  The design leverages Structural Segregation and Authorization Independence to ensure security and scalability.\n\n**LandingPageContents Collection:**  This collection stores the content for the landing pages. It's separate from the form definitions to allow independent updates and avoids mixing content with different access requirements.  This also provides a clear separation of concern for the data model.\n\n**Forms Collection:** This collection stores the definitions of the forms, including the schema.  This is separate from form submissions.\n\n**FormSubmissions Collection:** This collection stores the submissions for each form. It is a subcollection of the form to ensure that list operations can be performed securely. The `formId` field in the `FormSubmission` documents facilitates queries for submissions related to a specific form.  The structure enforces that only authenticated users can submit forms and admins can view responses for analysis.\n\n**AdminUsers Collection:** Stores admin user profiles. The existence of a document in this collection grants admin privileges, simplifying the security rules.\n\n**Authorization Independence:** Achieved by storing the `formId` in the `FormSubmissions` collection enabling rules to check for the existence of a form before allowing submissions. Additionally, the admin status is determined by the presence of a document in the `/admin_users/{uid}` collection, eliminating the need for `get()` calls in the rules.\n\n**QAPs Support:**\n*   Secure list operations for form submissions are enabled by storing submissions as subcollections of the forms. Security rules can easily check if the user has the necessary permissions to list submissions for a particular form.\n\n"
+  }
+}
