@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -24,15 +25,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Download, ArrowUpDown } from "lucide-react";
-import type { FormSubmission } from "@/lib/types";
+import type { FormSubmission, FormField } from "@/lib/types";
 
 // Function to export data to CSV
 function exportToCsv(data: FormSubmission[], columns: {id: string, label: string}[], fileName: string) {
     const headers = ['Enviado en', ...columns.map(c => c.label)];
     const rows = data.map(submission => {
+        const parsedData = typeof submission.data === 'string' ? JSON.parse(submission.data) : submission.data;
         const rowData = [
             submission.createdAt.toLocaleString(),
-            ...columns.map(c => JSON.stringify(submission.data[c.id] || ''))
+            ...columns.map(c => {
+              const value = parsedData[c.id] || '';
+              // Stringify if it's an object or array, otherwise use the value
+              if (typeof value === 'object' && value !== null) {
+                return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+              }
+              return `"${String(value).replace(/"/g, '""')}"`;
+            })
         ];
         return rowData.join(',');
     });
@@ -48,9 +57,13 @@ function exportToCsv(data: FormSubmission[], columns: {id: string, label: string
 }
 
 
-export function ResponsesTable({ data, formFields }: { data: FormSubmission[], formFields: {id: string, label: string}[] }) {
+export function ResponsesTable({ data, formFields }: { data: FormSubmission[], formFields: {id: string, label: string, type?: FormField['type']}[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+
+  const emailField = formFields.find(f => f.type === 'email' || f.id.includes('email'));
+  const emailColumnId = emailField ? `data.${emailField.id}` : undefined;
+
 
   const columns: ColumnDef<FormSubmission>[] = React.useMemo(() => [
     {
@@ -69,7 +82,13 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
     ...formFields.map(field => ({
         accessorKey: `data.${field.id}`,
         header: field.label,
-        cell: ({ row }: any) => <div>{row.getValue(`data_${field.id}`)}</div>
+        cell: ({ row }: any) => {
+          const rawValue = row.getValue(`data_${field.id}`);
+          // Handle both stringified JSON and actual objects
+          const data = typeof row.original.data === 'string' ? JSON.parse(row.original.data) : row.original.data;
+          const value = data[field.id];
+          return <div>{typeof value === 'object' ? JSON.stringify(value) : value}</div>
+        }
     })),
   ], [formFields]);
 
@@ -91,15 +110,17 @@ export function ResponsesTable({ data, formFields }: { data: FormSubmission[], f
   return (
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
-        <Input
-          placeholder="Filtrar por correo electrónico..."
-          value={(table.getColumn("data_email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("data_email")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <Button onClick={() => exportToCsv(data, formFields, "respuestas-formulario.csv")}>
+        {emailColumnId && (
+          <Input
+            placeholder="Filtrar por correo electrónico..."
+            value={(table.getColumn(emailColumnId)?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn(emailColumnId)?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        )}
+        <Button onClick={() => exportToCsv(data, formFields, "respuestas-formulario.csv")} className={!emailColumnId ? 'ml-auto' : ''}>
           <Download className="mr-2 h-4 w-4" />
           Exportar CSV
         </Button>

@@ -32,7 +32,7 @@ export default function ResponsesPage() {
 
     const formFields: FormField[] = formSchemaData ? JSON.parse(formSchemaData.schema || '[]') : [];
 
-    const tableFields = formFields.map(f => ({ id: f.id, label: f.label }));
+    const tableFields = formFields.map(f => ({ id: f.id, label: f.label, type: f.type }));
 
     if (submissionsLoading || schemaLoading) {
         return (
