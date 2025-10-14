@@ -13,6 +13,16 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 const FORM_ID = "main_contact_form";
 const CONTENT_ID = "main";
 
+function isValidUrl(string: string | undefined) {
+    if (!string) return false;
+    try {
+        new URL(string);
+        return string.startsWith('http://') || string.startsWith('https://');
+    } catch (_) {
+        return false;  
+    }
+}
+
 export default function Home() {
   const firestore = useFirestore();
 
@@ -33,12 +43,13 @@ export default function Home() {
   const formSchema: FormField[] = formSchemaData?.schema ? JSON.parse(formSchemaData.schema) : [];
   const placeholderImage = PlaceHolderImages.find(p => p.id === 'hero-image');
 
-  const siteContent: SiteContent = siteContentData || {
-      headline: "Crea Formularios Dinámicos Fácilmente",
-      description: "Construye, gestiona y analiza envíos de formularios con nuestra potente plataforma.",
-      image: placeholderImage?.imageUrl || "https://picsum.photos/seed/formforge-hero/1200/800",
-      formTitle: "Contáctanos",
-      formDescription: "Rellena el formulario y nos pondremos en contacto contigo.",
+  // Define el contenido del sitio con fallbacks y validación de URL
+  const siteContent: SiteContent = {
+      headline: siteContentData?.headline || "Crea Formularios Dinámicos Fácilmente",
+      description: siteContentData?.description || "Construye, gestiona y analiza envíos de formularios con nuestra potente plataforma.",
+      image: isValidUrl(siteContentData?.image) ? siteContentData!.image : placeholderImage?.imageUrl || "https://picsum.photos/seed/formforge-hero/1200/800",
+      formTitle: siteContentData?.formTitle || "Contáctanos",
+      formDescription: siteContentData?.formDescription || "Rellena el formulario y nos pondremos en contacto contigo.",
   };
 
 
