@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import type { FormField, FormFieldType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface FormEditorClientProps {
   initialSchema: FormField[];
@@ -32,7 +32,7 @@ const fieldIcons: Record<FormFieldType, React.ElementType> = {
 };
 
 
-export function FormEditorClient({ initialSchema, formId }: FormEditorClientProps) {
+function FormEditorClientComponent({ initialSchema, formId }: FormEditorClientProps) {
   const firestore = useFirestore();
   const [schema, setSchema] = useState<FormField[]>(initialSchema.sort((a,b) => a.order - b.order));
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(initialSchema[0]?.id || null);
@@ -128,7 +128,7 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
                  <Button onClick={handleAddField} className="w-full">
                     <Plus className="mr-2 h-4 w-4" /> Añadir Campo
                 </Button>
-                {isClient && (
+                {isClient ? (
                     <DragDropContext onDragEnd={onDragEnd}>
                         <Droppable droppableId="fields">
                             {(provided) => (
@@ -167,8 +167,11 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
                             )}
                         </Droppable>
                     </DragDropContext>
+                ) : (
+                    // Show a loading state or placeholder until the client is ready
+                    <p>Loading...</p>
                 )}
-                 {schema.length === 0 && (
+                 {schema.length === 0 && !isClient && (
                     <div className="text-center py-10 border-2 border-dashed rounded-lg">
                         <p className="text-muted-foreground">Aún no hay campos.</p>
                         <p className="text-sm text-muted-foreground">Añade uno para empezar.</p>
@@ -259,4 +262,4 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
   );
 }
 
-    
+export const FormEditorClient = memo(FormEditorClientComponent);
