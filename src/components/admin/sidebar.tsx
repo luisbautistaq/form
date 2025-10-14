@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronsUpDown, Edit, FileText, Inbox, LogOut, Settings, PanelLeft } from 'lucide-react';
+import { ChevronsUpDown, Edit, Inbox, LogOut } from 'lucide-react';
 import { useAuth } from '@/firebase';
 
 
@@ -59,7 +59,7 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton href="/admin" isActive={pathname === '/admin/responses'}>
+            <SidebarMenuButton href="/admin/responses" isActive={pathname.startsWith('/admin/responses')}>
               <Inbox />
               Respuestas
             </SidebarMenuButton>
@@ -68,12 +68,6 @@ export function AdminSidebar() {
             <SidebarMenuButton href="/admin/form-editor" isActive={pathname === '/admin/form-editor'}>
               <Edit />
               Editor de Formularios
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="/admin/content-editor" isActive={pathname === '/admin/content-editor'}>
-              <FileText />
-              Editor de Contenido
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
