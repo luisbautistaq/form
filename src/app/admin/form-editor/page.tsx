@@ -23,20 +23,23 @@ export default function FormEditorPage() {
                     <h1 className="font-headline text-3xl font-bold tracking-tight">Editor de Formularios</h1>
                     <p className="text-muted-foreground">Añade, edita, reordena y elimina campos del formulario.</p>
                 </div>
-                <Skeleton className="h-64 w-full" />
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 space-y-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </div>
+                    <div className="md:col-span-2">
+                         <Skeleton className="h-96 w-full" />
+                    </div>
+                </div>
             </div>
         );
     }
     
-    const schema: FormField[] = data ? JSON.parse(data.schema || '[]') : [];
+    const schema: FormField[] = data?.schema ? JSON.parse(data.schema) : [];
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="font-headline text-3xl font-bold tracking-tight">Editor de Formularios</h1>
-                <p className="text-muted-foreground">Añade, edita, reordena y elimina campos del formulario.</p>
-            </div>
-            <FormEditorClient initialSchema={schema} formId={FORM_ID}/>
-        </div>
+        <FormEditorClient initialSchema={schema} formId={FORM_ID}/>
     );
 }

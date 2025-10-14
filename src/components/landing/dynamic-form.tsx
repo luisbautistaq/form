@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { FormField as FormFieldType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore } from "@/firebase";
@@ -47,13 +48,19 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
           zodField = z.coerce.number();
           break;
         case "date":
-          zodField = z.date();
+          zodField = z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Fecha inválida." });
           break;
+        case "checkbox":
+            zodField = z.boolean();
+            break;
         default:
           zodField = z.string();
       }
       if (field.required) {
-        if(field.type === 'text' || field.type === 'textarea' || field.type === 'select' || field.type === 'email'){
+        if(field.type === 'checkbox') {
+            zodField = zodField.refine(val => val === true, { message: `${field.label} es obligatorio.` });
+        }
+        else if (field.type === 'text' || field.type === 'textarea' || field.type === 'select' || field.type === 'email'){
             zodField = zodField.min(1, { message: `${field.label} es obligatorio.` });
         }
       } else {
@@ -67,9 +74,18 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
   const formZodSchema = generateSchema(formSchema);
   type FormValues = z.infer<typeof formZodSchema>;
 
+  const defaultValues = formSchema.reduce((acc, field) => {
+    if (field.type === 'checkbox') {
+      acc[field.id] = false;
+    } else {
+      acc[field.id] = '';
+    }
+    return acc;
+  }, {} as any);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formZodSchema),
-    defaultValues: formSchema.reduce((acc, field) => ({ ...acc, [field.id]: '' }), {}),
+    defaultValues: defaultValues,
   });
 
   async function onSubmit(data: FormValues) {
@@ -94,10 +110,8 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
           requestResourceData: payload,
         });
 
-        // Emite el error para que el listener global lo capture.
         errorEmitter.emit('permission-error', permissionError);
-
-        // Muestra un toast genérico al usuario.
+        
         toast({
           variant: "destructive",
           title: "¡Uy! Algo salió mal.",
@@ -126,6 +140,20 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
             </SelectContent>
           </Select>
         );
+      case "checkbox":
+        return (
+            <div className="flex items-center space-x-2">
+                <Checkbox id={fieldConfig.id} checked={formField.value} onCheckedChange={formField.onChange} />
+                <label
+                    htmlFor={fieldConfig.id}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    {fieldConfig.label}
+                </label>
+            </div>
+        )
+      case "date":
+        return <Input type="date" {...commonProps} />
       default:
         return <Input type={fieldConfig.type} {...commonProps} />;
     }
@@ -147,7 +175,7 @@ export function DynamicForm({ formSchema, formTitle, formDescription }: DynamicF
                 name={fieldConfig.id as keyof FormValues}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{fieldConfig.label}</FormLabel>
+                    {fieldConfig.type !== 'checkbox' && <FormLabel>{fieldConfig.label}</FormLabel>}
                     <FormControl>
                       {renderField(fieldConfig, field)}
                     </FormControl>

@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 
-export type FormFieldType = 'text' | 'email' | 'textarea' | 'number' | 'date' | 'select';
+export type FormFieldType = 'text' | 'email' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox';
 
 export interface FormField {
   id: string;
