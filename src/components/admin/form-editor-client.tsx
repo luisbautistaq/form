@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormField, FormFieldType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +37,12 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
   const [schema, setSchema] = useState<FormField[]>(initialSchema.sort((a,b) => a.order - b.order));
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(initialSchema[0]?.id || null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const selectedField = schema.find(f => f.id === selectedFieldId);
 
@@ -77,6 +82,11 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
   
   const handleSaveChanges = async () => {
     setIsSaving(true);
+    if (!firestore) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudo conectar a la base de datos." });
+        setIsSaving(false);
+        return;
+    }
     const formDocRef = doc(firestore, `forms/${formId}`);
     const payload = { 
         schema: JSON.stringify(schema)
@@ -118,44 +128,46 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
                  <Button onClick={handleAddField} className="w-full">
                     <Plus className="mr-2 h-4 w-4" /> Añadir Campo
                 </Button>
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <Droppable droppableId="fields">
-                        {(provided) => (
-                            <div {...provided.droppableProps} ref={provided.innerRef} className='space-y-2'>
-                                {schema.map((field, index) => {
-                                    const Icon = fieldIcons[field.type] || FileText;
-                                    return (
-                                        <Draggable key={field.id} draggableId={field.id} index={index}>
-                                            {(provided, snapshot) => (
-                                                <div
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                >
-                                                    <Card 
-                                                        onClick={() => setSelectedFieldId(field.id)}
-                                                        className={`p-3 cursor-pointer flex items-center gap-3 transition-all ${selectedFieldId === field.id ? 'border-primary shadow-lg' : 'hover:bg-muted/50'} ${snapshot.isDragging ? 'shadow-xl' : ''}`}
+                {isClient && (
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        <Droppable droppableId="fields">
+                            {(provided) => (
+                                <div {...provided.droppableProps} ref={provided.innerRef} className='space-y-2'>
+                                    {schema.map((field, index) => {
+                                        const Icon = fieldIcons[field.type] || FileText;
+                                        return (
+                                            <Draggable key={field.id} draggableId={field.id} index={index}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
                                                     >
-                                                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                                        <Icon className="h-5 w-5 text-primary" />
-                                                        <div className='flex-1'>
-                                                            <p className="font-medium text-sm">{field.label}</p>
-                                                            <p className="text-xs text-muted-foreground">{field.type}</p>
-                                                        </div>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleDeleteField(field.id)}}>
-                                                            <Trash2 className="h-4 w-4 text-destructive"/>
-                                                        </Button>
-                                                    </Card>
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                    )
-                                })}
-                                {provided.placeholder}
-                            </div>
-                        )}
-                    </Droppable>
-                </DragDropContext>
+                                                        <Card 
+                                                            onClick={() => setSelectedFieldId(field.id)}
+                                                            className={`p-3 cursor-pointer flex items-center gap-3 transition-all ${selectedFieldId === field.id ? 'border-primary shadow-lg' : 'hover:bg-muted/50'} ${snapshot.isDragging ? 'shadow-xl' : ''}`}
+                                                        >
+                                                            <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                                            <Icon className="h-5 w-5 text-primary" />
+                                                            <div className='flex-1'>
+                                                                <p className="font-medium text-sm">{field.label}</p>
+                                                                <p className="text-xs text-muted-foreground">{field.type}</p>
+                                                            </div>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleDeleteField(field.id)}}>
+                                                                <Trash2 className="h-4 w-4 text-destructive"/>
+                                                            </Button>
+                                                        </Card>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        )
+                                    })}
+                                    {provided.placeholder}
+                                </div>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
+                )}
                  {schema.length === 0 && (
                     <div className="text-center py-10 border-2 border-dashed rounded-lg">
                         <p className="text-muted-foreground">Aún no hay campos.</p>
@@ -224,7 +236,7 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
                             </div>
                          )}
                         <div className="flex items-center space-x-2">
-                            <Checkbox 
+                            <Checkbox
                                 id="required"
                                 checked={selectedField.required}
                                 onCheckedChange={c => handleUpdateField({...selectedField, required: !!c})}
@@ -246,3 +258,5 @@ export function FormEditorClient({ initialSchema, formId }: FormEditorClientProp
     </div>
   );
 }
+
+    
