@@ -1,99 +1,20 @@
 /**
  * @file Overview
- * This ruleset enforces a role-based access control model with an "admin" role determined by the existence of an AdminUser document.
- * Data is organized into top-level collections for LandingPageContent, Forms, and AdminUsers, with FormSubmissions as a subcollection of Forms.
- * Key security decisions include:
- *  - Public read access to LandingPageContent and Forms.
- *  - Restricting FormSubmission creation to authenticated users.
- *  - Granting admin privileges based on the presence of an AdminUser document.
- *  - Implementing Authorization Independence by denormalizing the `formId` in `FormSubmission` documents and checking admin status directly via document existence.
+ * This ruleset grants public read and write access to all data in the Firestore database.
+ *
+ * Core Philosophy:
+ * This ruleset is designed for rapid prototyping and allows all users, authenticated or not,
+ * to read and write any data in the database.
+ *
+ * WARNING: This configuration is highly insecure and should NEVER be used in a production environment.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Allows public read access to landing page content and restricts write access to admins.
-     * @path /landing_page_contents/{landingPageContentId}
-     * @allow (get, list) - Any user can read landing page content.
-     * @allow (create, update, delete) - An admin user can create, update, and delete landing page content.
-     * @deny (create, update, delete) - A non-admin user cannot create, update, or delete landing page content.
-     * @principle Provides public information while restricting modification to authorized admins.
-     */
-    match /landing_page_contents/{landingPageContentId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Allows public read access to form definitions and restricts write access to admins.
-     * @path /forms/{formId}
-     * @allow (get, list) - Any user can read form definitions.
-     * @allow (create, update, delete) - An admin user can create, update, and delete form definitions.
-     * @deny (create, update, delete) - A non-admin user cannot create, update, or delete form definitions.
-     * @principle Provides public information while restricting modification to authorized admins.
-     */
-    match /forms/{formId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Allows authenticated users to create form submissions and restricts listing submissions to admins.
-     * @path /forms/{formId}/form_submissions/{formSubmissionId}
-     * @allow (create) - An authenticated user can create a form submission.
-     * @allow (get) - An admin can read a form submission.
-     * @allow (list) - An admin can list all form submissions.
-     * @allow (update, delete) - An admin can update/delete a form submission.
-     * @deny (create) - An unauthenticated user cannot create a form submission.
-     * @deny (get, list, update, delete) - A non-admin user cannot read, list, update, or delete form submissions.
-     * @principle Enforces authentication for form submissions and restricts management to authorized admins.
-     */
-    match /forms/{formId}/form_submissions/{formSubmissionId} {
-      allow create: if isSignedIn();
-      allow get, list, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Determines admin privileges based on the existence of a document in this collection.
-     * @path /admin_users/{adminUserId}
-     * @allow (get) - Any user can check the existence of an admin user document (but not the data).
-     * @allow (create) - Only the user themselves can create their admin user document.
-     * @deny (list, update, delete) - Listing, updating, or deleting admin users is not allowed through the API.
-     * @principle Grants admin privileges based on the existence of a document.
-     */
-    match /admin_users/{adminUserId} {
-        allow get: if true;
-        allow create: if isOwner(adminUserId);
-        allow list, update, delete: if false;
-    }
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     * @principle Verifies user authentication.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the requesting user is an admin.
-     * @return {bool} True if the requesting user is an admin, false otherwise.
-     * @principle Determines admin privileges based on the existence of a document.
-     */
-    function isAdmin() {
-      return exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
-    }
-
-    /**
-     * @description Checks if the requesting user is the owner of the resource.
-     * @param {string} userId - The ID of the user that should own the resource.
-     * @return {bool} True if the requesting user is the owner, false otherwise.
-     * @principle Enforces document ownership for writes.
-     */
-    function isOwner(userId) {
-        return request.auth.uid == userId;
+    // Allow read/write access to all users on all documents
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
