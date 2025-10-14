@@ -7,6 +7,7 @@ import type { SiteContent, FormField } from "@/lib/types";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 // ID del formulario y del contenido a cargar.
 const FORM_ID = "main_contact_form";
@@ -20,7 +21,7 @@ export default function Home() {
     () => (firestore ? doc(firestore, `landing_page_contents/${CONTENT_ID}`) : null),
     [firestore]
   );
-  const { data: siteContent, isLoading: isContentLoading } = useDoc<SiteContent>(contentRef);
+  const { data: siteContentData, isLoading: isContentLoading } = useDoc<SiteContent>(contentRef);
 
   // Hook para obtener el esquema del formulario desde Firestore
   const formSchemaRef = useMemoFirebase(
@@ -30,9 +31,19 @@ export default function Home() {
   const { data: formSchemaData, isLoading: isSchemaLoading } = useDoc<{ schema: string }>(formSchemaRef);
   
   const formSchema: FormField[] = formSchemaData?.schema ? JSON.parse(formSchemaData.schema) : [];
+  const placeholderImage = PlaceHolderImages.find(p => p.id === 'hero-image');
+
+  const siteContent: SiteContent = siteContentData || {
+      headline: "Crea Formularios Dinámicos Fácilmente",
+      description: "Construye, gestiona y analiza envíos de formularios con nuestra potente plataforma.",
+      image: placeholderImage?.imageUrl || "https://picsum.photos/seed/formforge-hero/1200/800",
+      formTitle: "Contáctanos",
+      formDescription: "Rellena el formulario y nos pondremos en contacto contigo.",
+  };
+
 
   // Muestra un esqueleto de carga mientras se obtienen los datos.
-  if (isContentLoading || isSchemaLoading || !siteContent || !formSchemaData) {
+  if (isContentLoading || isSchemaLoading) {
     return (
         <div className="flex min-h-dvh flex-col bg-background">
             <Header />

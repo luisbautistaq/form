@@ -5,6 +5,7 @@ import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
 import type { SiteContent } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function ContentEditorPage() {
     const firestore = useFirestore();
@@ -26,10 +27,12 @@ export default function ContentEditorPage() {
         )
     }
 
+    const placeholderImage = PlaceHolderImages.find(p => p.id === 'hero-image');
+
     const initialContent: SiteContent = data || {
         headline: "",
         description: "",
-        image: "",
+        image: placeholderImage?.imageUrl || "",
         formTitle: "",
         formDescription: "",
     };
