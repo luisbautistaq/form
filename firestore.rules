@@ -1,20 +1,83 @@
 /**
- * @file Overview
- * This ruleset grants public read and write access to all data in the Firestore database.
+ * @file Firebase Security Rules for FormForge.
  *
- * Core Philosophy:
- * This ruleset is designed for rapid prototyping and allows all users, authenticated or not,
- * to read and write any data in the database.
+ * @description This ruleset enforces a role-based access control model with admin privileges determined by the existence of an AdminUser document. It ensures data ownership and restricts access to specific user roles.
  *
- * WARNING: This configuration is highly insecure and should NEVER be used in a production environment.
+ * @dataStructure
+ * - /landing_page_contents/{landingPageContentId}: Stores landing page content.
+ * - /forms/{formId}: Stores form definitions.
+ * - /forms/{formId}/form_submissions/{formSubmissionId}: Stores form submissions.
+ * - /admin_users/{adminUserId}: Stores admin user profiles.
+ *
+ * @keySecurityDecisions
+ * - Admin privileges are granted by the presence of a document in the `/admin_users/{uid}` collection.
+ * - Form submissions are stored as subcollections of forms to enable secure list operations.
+ * - No user listing is allowed for admin users.
+ * - Data validation is limited to fields critical for authorization and relational integrity.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow read/write access to all users on all documents
-    match /{document=**} {
-      allow read, write: if true;
+    /**
+     * @description Controls access to landing page content. Only admins can create, update, or delete landing page content. Anyone can read.
+     * @path /landing_page_contents/{landingPageContentId}
+     * @allow (get, list) if true
+     * @allow (create, update, delete) if isAdmin()
+     * @deny (create, update, delete) if !isAdmin()
+     * @principle Public read, admin-only writes.
+     */
+    match /landing_page_contents/{landingPageContentId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Controls access to form definitions. Only admins can create, update, or delete forms. Anyone can read.
+     * @path /forms/{formId}
+     * @allow (get, list) if true
+     * @allow (create, update, delete) if isAdmin()
+     * @deny (create, update, delete) if !isAdmin()
+     * @principle Public read, admin-only writes.
+     */
+    match /forms/{formId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Controls access to form submissions. Only authenticated users can create submissions. Only admins can read, update, or delete submissions.
+     * @path /forms/{formId}/form_submissions/{formSubmissionId}
+     * @allow create if isSignedIn() && request.resource.data.formId == formId;
+     * @allow get, list, update, delete if isAdmin();
+     * @deny create if !isSignedIn()
+     * @deny get, list, update, delete if !isAdmin()
+     * @principle Authenticated users can create, admins have full access.
+     */
+    match /forms/{formId}/form_submissions/{formSubmissionId} {
+      allow create: if isSignedIn() && request.resource.data.formId == formId;
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Controls access to admin user profiles. Only admins can create an admin user profile. No user can read, list, update, or delete another admin user profile.
+     * @path /admin_users/{adminUserId}
+     * @allow create if isAdmin();
+     * @deny get, list, update, delete if true;
+     * @principle Admin users can only be created by other admins; no user can read/list admin user profiles.
+     */
+    match /admin_users/{adminUserId} {
+      allow create: if isAdmin();
+      allow get, list, update, delete: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
     }
   }
 }
