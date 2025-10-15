@@ -15,7 +15,7 @@ const FORM_ID = "main_contact_form";
 export default function Home() {
   const firestore = useFirestore();
 
-  // Hook para obtener el esquema del formulario desde Firestore
+  
   const formSchemaRef = useMemoFirebase(
     () => (firestore ? doc(firestore, `forms/${FORM_ID}`) : null),
     [firestore]
