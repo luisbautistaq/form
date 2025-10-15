@@ -9,7 +9,7 @@ import { doc } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-// ID del formulario a cargar.
+
 const FORM_ID = "main_contact_form";
 
 export default function Home() {
